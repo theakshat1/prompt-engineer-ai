@@ -1,0 +1,6 @@
+openai
+pinecone-client
+pinecone
+sentence-transformers
+numpy
+python-dotenv
