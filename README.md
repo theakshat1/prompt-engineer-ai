@@ -45,6 +45,7 @@ A powerful tool designed to generate and optimize prompts for language models. L
 ## Credits
 
 [@theakshat1](https://github.com/theakshat1) - Creator and Developer.
+
 [@akshat122402](https://github.com/akshat122402) - Tester and constant support.
 
 ## 🚧 Under Development 🚧
