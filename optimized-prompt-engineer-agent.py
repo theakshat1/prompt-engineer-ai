@@ -25,6 +25,31 @@ class PromptEngineerAgent:
         self.setup_logging()
         self.setup_apis()
         self.load_system_prompt()
+        self.refine_system_prompt = """
+You are an AI assistant specializing in prompt engineering. Your task is to refine a user's raw prompt to make it more effective. 
+Consider the following principles:
+- Persona: Who should the AI act as?
+- Task: What specific task should the AI perform?
+- Format: What is the desired output format (e.g., list, JSON, paragraph)?
+- Tone: What tone should the AI adopt (e.g., formal, friendly)?
+- Exemplars: Are there good examples to guide the AI?
+- Constraints: Any limitations or rules to follow?
+- Clarity and Specificity: Is the language unambiguous?
+Based on these principles and any retrieved context, improve the given user prompt.
+"""
+        self.clarify_question_system_prompt = """
+You are an AI assistant specializing in prompt engineering. Your role is to generate clarifying questions to help improve a user's prompt.
+Focus on:
+- Target audience: Who is the prompt for?
+- Desired output: What specific format or structure is expected?
+- Level of detail: How much information is needed?
+- Missing information: What critical details are absent from the current prompt and context?
+Ask questions that will help fill these gaps. If no further questions are needed based on the provided information, respond with the exact string "NO_QUESTION".
+"""
+        self.final_prompt_system_prompt = """
+You are an AI assistant specializing in prompt engineering. Your task is to synthesize an original prompt, user's answers to clarifying questions, and any retrieved context into a single, final, highly effective prompt.
+Ensure the final prompt is clear, specific, and incorporates all relevant information gathered.
+"""
 
     def setup_logging(self) -> None:
         logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -39,9 +64,17 @@ class PromptEngineerAgent:
 
     def load_system_prompt(self) -> None:
         self.system_prompt = self.get_env_variable("SYSTEM_PROMPT", """
-        You are an expert prompt engineer. Your task is to refine and optimize user prompts 
-        to make them more effective and understandable for AI chatbots like ChatGPT and Claude. 
-        Analyze the given prompt, identify areas for improvement, and suggest refinements. 
+        You are an expert prompt engineer. Your task is to refine and optimize user prompts
+        to make them more effective and understandable for AI chatbots like ChatGPT and Claude.
+        Analyze the given prompt, identify areas for improvement, and suggest refinements.
+        Consider the following key prompt engineering principles:
+        - Persona: Who should the AI act as? (e.g., a historian, a scientist, a pirate)
+        - Task: What specific task should the AI perform? (e.g., summarize text, write code, generate ideas)
+        - Format: What is the desired output format? (e.g., list, JSON, paragraph, markdown table)
+        - Tone: What tone should the AI adopt? (e.g., formal, friendly, humorous, assertive)
+        - Exemplars: Can you provide good examples of the desired output? (Showing is often better than telling)
+        - Constraints: Are there any limitations or rules to follow? (e.g., word count, style guides, topics to avoid)
+        - Clarity and Specificity: Is the language unambiguous and precise? (Avoid vague terms)
         If necessary, ask clarifying questions to better understand the user's intent.
         Use the provided context from the knowledge base to inform your decisions and suggestions.
         """)
@@ -92,47 +125,105 @@ class PromptEngineerAgent:
             logging.error(f"Error generating response: {e}")
             return f"Error generating response: {e}"
 
-    def refine_prompt(self, user_prompt: str) -> str:
+    def refine_prompt(self, user_prompt: str) -> (str, List[Dict[str, str]]):
         context = self.retrieve_context(user_prompt)
         logging.info(f"Retrieved context for refining prompt: {context}")
         
         messages = [
-            {"role": "system", "content": self.system_prompt},
+            {"role": "system", "content": self.refine_system_prompt},
             {"role": "user", "content": f"Please refine and optimize the following prompt, using the provided context: '{user_prompt}'\n\nContext: {context}"}
         ]
 
         refined_prompt = self.generate_response(messages)
         logging.info(f"Refined prompt: {refined_prompt}")
-        return refined_prompt
+        return refined_prompt, messages
 
-    def ask_clarifying_question(self, context: str):
-        retrieved_context = self.retrieve_context(context)
+    def get_feedback_on_refined_prompt(self, refined_prompt: str, refinement_messages: List[Dict[str, str]]) -> (str, List[Dict[str, str]]):
+        print(f"Refined prompt: {refined_prompt}")
+        user_feedback = input("Are you satisfied with this refined prompt? If not, please provide your feedback. Press Enter to accept: ").strip()
+
+        if user_feedback:
+            logging.info(f"User provided feedback on refined prompt: {user_feedback}")
+            refinement_messages.append({"role": "assistant", "content": refined_prompt})
+            refinement_messages.append({"role": "user", "content": f"I have some feedback on that prompt: {user_feedback}"})
+            
+            refined_prompt = self.generate_response(refinement_messages)
+            logging.info(f"Re-refined prompt after feedback: {refined_prompt}")
+        else:
+            logging.info("User accepted the refined prompt.")
+        
+        return refined_prompt, refinement_messages
+
+    def ask_clarifying_question(self, current_interaction_summary: str, previous_messages: List[Dict[str, str]]):
+        # current_interaction_summary is still useful for context retrieval and logging
+        retrieved_context = self.retrieve_context(current_interaction_summary) 
         logging.info(f"Retrieved context for clarifying question: {retrieved_context}")
 
-        messages = [
-            {"role": "system", "content": """
-            You are an expert prompt engineer. Your task is to refine and optimize user prompts 
-            to make them more effective and understandable for AI chatbots like ChatGPT and Claude. 
-            Analyze the given prompt, identify areas for improvement, and suggest refinements. 
-            If necessary, explicitly ask clarifying questions to better understand the user's intent.
-            Use the provided context from the knowledge base to inform your decisions and suggestions.
-            """},
-            {"role": "user", "content": f"Based on this detailed context and the retrieved information, identify and list specific clarifying questions to ask the user to obtain information that would optimize their initial prompt. If no further questions are needed, respond with '{NO_QUESTION}'.\n\nContext: {context}\n\nRetrieved Information: {retrieved_context}"}
-        ]
+        # Start with the history that led to the refined prompt
+        messages = list(previous_messages) # Make a copy
 
-        question = self.generate_response(messages)
+        # Append the system prompt for asking clarifying questions
+        # It's better to place the system prompt at the beginning if it's not already there,
+        # or ensure it's the first message if previous_messages doesn't include one.
+        # For simplicity, let's assume previous_messages might not have the *correct* system prompt for *this specific task*.
+        # So, we'll prepend the specific system prompt for question generation.
+        
+        messages_for_question_generation = [{"role": "system", "content": self.clarify_question_system_prompt}]
+        
+        # Add the existing conversation that led to the current refined prompt.
+        # This context should ideally end with the assistant's last refined prompt.
+        messages_for_question_generation.extend(messages) 
+
+        # Now add the user message that explicitly asks for clarifying questions
+        user_instruction = (
+            f"You are an expert prompt engineer. Review the conversation history provided above. "
+            f"Based on this history, the interaction summary below, and the retrieved external information, "
+            f"identify and list specific clarifying questions to ask the user. These questions should aim to gather "
+            f"information that would further optimize the user's prompt, focusing on aspects like target audience, "
+            f"desired output format, constraints, examples, or any ambiguities. "
+            f"If no further questions are needed, respond with the exact string '{NO_QUESTION}'.\n\n"
+            f"Current Interaction Summary (for additional context and keyword extraction for retrieval):\n"
+            f"{current_interaction_summary}\n\n"
+            f"Retrieved External Information:\n"
+            f"{retrieved_context}"
+        )
+        messages_for_question_generation.append({"role": "user", "content": user_instruction})
+
+        question = self.generate_response(messages_for_question_generation)
         logging.info(f"Generated clarifying question: {question}")
         return question
 
-    def generate_final_prompt(self, original_prompt: str, user_responses: List[str]) -> str:
-        context = f"Original prompt: {original_prompt}\nUser responses: {'; '.join(user_responses)}"
-        retrieved_context = self.retrieve_context(context)
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": f"Generate a final, optimized prompt based on this information and the retrieved context:\n\nContext: {context}\n\nRetrieved Information: {retrieved_context}"}
-        ]
+    def generate_final_prompt(self, full_conversation_history: List[Dict[str, str]], clarifying_questions_and_responses_summary: str) -> str:
+        # Determine the latest refined prompt from the history for context retrieval
+        latest_refined_prompt = "N/A"
+        if full_conversation_history:
+            # Iterate backwards to find the last assistant message, which should be the latest refinement
+            for i in range(len(full_conversation_history) - 1, -1, -1):
+                if full_conversation_history[i]['role'] == 'assistant':
+                    latest_refined_prompt = full_conversation_history[i]['content']
+                    break
+            if latest_refined_prompt == "N/A" and full_conversation_history[0]['role'] == 'user': # Fallback to initial user prompt if no assistant message
+                latest_refined_prompt = full_conversation_history[0]['content']
 
-        return self.generate_response(messages)
+
+        context_for_retrieval = f"Latest refined prompt: {latest_refined_prompt}\nClarifying questions and responses: {clarifying_questions_and_responses_summary}"
+        retrieved_context = self.retrieve_context(context_for_retrieval)
+        
+        logging.info(f"Context for final prompt generation:\nHistory: {full_conversation_history}\nQ&A Summary: {clarifying_questions_and_responses_summary}\nRetrieved Context: {retrieved_context}")
+
+        final_messages = [{"role": "system", "content": self.final_prompt_system_prompt}]
+        final_messages.extend(list(full_conversation_history)) # Use a copy of the history
+
+        user_instruction_for_final_prompt = (
+            f"Based on our entire conversation so far (including the initial prompt, my feedback, and your refinements, all detailed in the message history above), "
+            f"and additionally considering the following summary of clarifying questions and my answers, please generate the final, "
+            f"optimized prompt. Use the retrieved external information to enhance it further.\n\n"
+            f"Summary of Clarifying Questions and Answers:\n{clarifying_questions_and_responses_summary}\n\n"
+            f"Retrieved External Information:\n{retrieved_context}"
+        )
+        final_messages.append({"role": "user", "content": user_instruction_for_final_prompt})
+        
+        return self.generate_response(final_messages)
 
     @staticmethod
     def get_user_input(prompt: str) -> str:
@@ -142,14 +233,24 @@ class PromptEngineerAgent:
                 return user_input
             print("Input cannot be empty. Please try again.")
 
-    def get_clarifying_responses(self, user_prompt: str, refined_prompt: str) -> List[str]:
+    def get_clarifying_responses(self, user_prompt: str, refined_prompt: str, refinement_history_messages: List[Dict[str, str]]) -> (List[str], str):
         user_responses = []
+        q_and_a_summary_parts = []
         max_questions = 3
-        for i in range(max_questions):
-            context = f"Original prompt: {user_prompt}\nRefined prompt: {refined_prompt}\nUser responses: {'; '.join(user_responses)}"
-            logging.info(f"Context before clarifying question {i + 1}: {context}")
+        
+        # Append the latest refined prompt by assistant to the history before asking questions
+        # This ensures the LLM sees the prompt it's supposed to be asking questions about.
+        current_history = list(refinement_history_messages)
+        if not current_history or current_history[-1]['content'] != refined_prompt or current_history[-1]['role'] != 'assistant':
+             current_history.append({"role": "assistant", "content": refined_prompt})
 
-            question = self.ask_clarifying_question(context)
+
+        for i in range(max_questions):
+            current_interaction_summary = f"Original prompt: {user_prompt}\nLatest refined prompt: {refined_prompt}\nPrevious user responses to clarifying questions: {'; '.join(user_responses)}"
+            logging.info(f"Context for clarifying question {i + 1}: {current_interaction_summary}")
+
+            # Pass the potentially updated current_history (which includes the latest refined_prompt)
+            question = self.ask_clarifying_question(current_interaction_summary, current_history)
             logging.info(f"Clarifying question {i + 1}: {question}")
 
             if question.strip().upper() == NO_QUESTION:
@@ -158,23 +259,33 @@ class PromptEngineerAgent:
 
             response = self.get_user_input(f"Clarifying question: {question}\nYour response (or press Enter to skip): ")
             logging.info(f"User response to clarifying question {i + 1}: {response}")
-
+            
+            q_and_a_summary_parts.append(f"Q: {question}\nA: {response if response else 'Skipped'}")
+            current_history.append({"role": "assistant", "content": question}) # Add AI question to history
             if response:
                 user_responses.append(response)
+                current_history.append({"role": "user", "content": response}) # Add user response to history
             else:
+                # If user skips, we might still want to note that in history or just break.
+                # For now, we break, and the summary already notes "Skipped".
                 break
-
-        return user_responses
+        
+        return user_responses, "\n".join(q_and_a_summary_parts)
 
     def run(self) -> None:
         try:
             user_prompt = self.get_user_input("Enter your initial prompt: ")
-            refined_prompt = self.refine_prompt(user_prompt)
-            print(f"Refined prompt: {refined_prompt}")
+            refined_prompt, refinement_messages = self.refine_prompt(user_prompt)
+            
+            # The refined_prompt and refinement_messages are now the baseline conversation history
+            refined_prompt, refinement_messages = self.get_feedback_on_refined_prompt(refined_prompt, refinement_messages)
 
-            user_responses = self.get_clarifying_responses(user_prompt, refined_prompt)
+            # refinement_messages now contains history up to the point of user accepting the refined prompt (or last re-refinement)
+            # user_responses is a simple list of strings, q_and_a_summary is the formatted string
+            user_responses, q_and_a_summary = self.get_clarifying_responses(user_prompt, refined_prompt, refinement_messages)
 
-            final_prompt = self.generate_final_prompt(user_prompt, user_responses)
+            # Pass the full conversation history (refinement_messages) and the Q&A summary
+            final_prompt = self.generate_final_prompt(refinement_messages, q_and_a_summary)
             print(f"Final optimized prompt: {final_prompt}")
         except Exception as e:
             logging.error(f"An error occurred during execution: {e}")
