@@ -253,6 +253,20 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
+        .error .message-bubble { /* New style for error messages */
+            background: #fff0f0; /* Light pink background */
+            color: #c53030; /* Dark red text */
+            border: 1px solid #fdb8b8; /* Light red border */
+            border-left: 5px solid #c53030; /* Prominent red left border */
+        }
+        
+        .system-error .message-bubble { /* Alias or alternative for error styling */
+            background: #fff0f0; 
+            color: #c53030; 
+            border: 1px solid #fdb8b8;
+            border-left: 5px solid #c53030;
+        }
+
         .progress-steps {
             display: flex;
             justify-content: space-between;
@@ -581,242 +595,379 @@
     </div>
 
     <script>
+        // --- Global State ---
         let currentStep = 1;
-        let conversationState = 'initial';
-        let refinedPrompt = '';
-        let questionNumber = 0;
-        const maxQuestions = 3;
+        let current_prompt = ""; // Holds the latest version of the prompt
+        let conversation_history = []; // Array of {role: 'user'/'assistant', content: '...'}
+        const API_BASE_URL = "http://127.0.0.1:5000"; // Backend API URL
+        const NO_QUESTION_MARKER = "NO_QUESTION";
 
-        const stepInfo = {
+        // --- UI Elements ---
+        const initialPromptTextarea = document.getElementById('initialPrompt');
+        const chatContainer = document.getElementById('chatContainer');
+        const userInputSection = document.getElementById('userInputSection');
+        const userResponseInput = document.getElementById('userResponse');
+        const finalResultCard = document.getElementById('finalResult');
+        const finalPromptContentEl = document.getElementById('finalPromptContent');
+        const stepInfoEl = document.getElementById('stepInfo');
+        const statusIndicatorEl = document.querySelector('.status-indicator');
+        const refineButton = document.querySelector('.btn-primary[onclick="startRefinement()"]'); // Assuming this is the one
+        const sendResponseButton = document.querySelector('.btn-secondary[onclick="sendUserResponse()"]');
+
+
+        const stepInfoText = {
             1: { title: "Initial Prompt Analysis", desc: "Enter your initial prompt to begin the optimization process." },
-            2: { title: "Prompt Refinement", desc: "AI analyzes and refines your prompt based on best practices." },
+            2: { title: "Prompt Refinement", desc: "AI analyzes and refines your prompt. Waiting for first clarifying question." },
             3: { title: "Clarifying Questions", desc: "Answer questions to further optimize your prompt." },
             4: { title: "Final Optimization", desc: "Receive your fully optimized prompt ready for use." }
         };
 
-        function updateStep(step) {
-            // Update progress indicators
+        function updateStepUI(step) {
             for (let i = 1; i <= 4; i++) {
                 const stepEl = document.getElementById(`step${i}`);
                 stepEl.classList.remove('active', 'completed');
-                if (i < step) {
-                    stepEl.classList.add('completed');
-                } else if (i === step) {
-                    stepEl.classList.add('active');
-                }
+                if (i < step) stepEl.classList.add('completed');
+                else if (i === step) stepEl.classList.add('active');
             }
-
-            // Update step info
-            const stepInfoEl = document.getElementById('stepInfo');
             stepInfoEl.innerHTML = `
-                <strong>Step ${step}:</strong> ${stepInfo[step].title}
-                <p style="margin-top: 5px; color: #666; font-size: 0.9rem;">${stepInfo[step].desc}</p>
-            `;
-
+                <strong>Step ${step}:</strong> ${stepInfoText[step].title}
+                <p style="margin-top: 5px; color: #666; font-size: 0.9rem;">${stepInfoText[step].desc}</p>`;
             currentStep = step;
         }
 
-        function addMessage(content, sender) {
-            const chatContainer = document.getElementById('chatContainer');
+        function addMessageToChat(content, role) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `chat-message ${sender}`;
-            messageDiv.innerHTML = `<div class="message-bubble">${content}</div>`;
+            // Ensure role is a valid class name, default to 'assistant' if unknown for safety.
+            // Allowed roles: 'user', 'assistant', 'error', 'system-error'
+            const validRoles = ['user', 'assistant', 'error', 'system-error'];
+            const messageRole = validRoles.includes(role) ? role : 'assistant';
+            messageDiv.className = `chat-message ${messageRole}`; 
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            // Sanitize content before inserting as HTML if it can contain user-inputted HTML
+            // For now, assuming backend provides safe HTML or plain text.
+            // Using textContent for safety if content is purely text, or carefully construct HTML.
+            // If content can have <br>, we need innerHTML.
+            bubble.innerHTML = content.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(bubble);
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-
-        function useExamplePrompt(element) {
-            const promptText = element.querySelector('p').textContent;
-            document.getElementById('initialPrompt').value = promptText;
+        
+        function escapeHtml(unsafe) {
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
         }
 
-        function startRefinement() {
-            const initialPrompt = document.getElementById('initialPrompt').value.trim();
-            if (!initialPrompt) {
+
+        function showUserInput(show = true) {
+            userInputSection.classList.toggle('hidden', !show);
+            if (show) userResponseInput.focus();
+            else userResponseInput.value = '';
+        }
+
+        function setLoadingState(isLoading, message = "Processing...") {
+            if (isLoading) {
+                statusIndicatorEl.className = 'status-indicator status-processing loading';
+                statusIndicatorEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${message}`;
+                if(refineButton) refineButton.disabled = true;
+                if(sendResponseButton) sendResponseButton.disabled = true;
+            } else {
+                statusIndicatorEl.className = 'status-indicator status-ready';
+                statusIndicatorEl.innerHTML = `<i class="fas fa-check-circle"></i> System Ready`;
+                 if(refineButton) refineButton.disabled = false;
+                if(sendResponseButton) sendResponseButton.disabled = false;
+            }
+        }
+        
+        function useExamplePrompt(element) {
+            const promptText = element.querySelector('p').textContent;
+            initialPromptTextarea.value = promptText;
+        }
+
+        async function startRefinement() {
+            const initialPromptValue = initialPromptTextarea.value.trim();
+            if (!initialPromptValue) {
                 alert('Please enter an initial prompt first.');
                 return;
             }
 
-            updateStep(2);
-            addMessage(`Initial prompt: "${initialPrompt}"`, 'user');
-            
-            // Simulate AI processing
-            setTimeout(() => {
-                addMessage('Analyzing your prompt and retrieving relevant context from knowledge base...', 'assistant');
-                
-                setTimeout(() => {
-                    const refinements = [
-                        "Added specific role assignment (expert content creator)",
-                        "Clarified desired output format (structured with bullet points)",
-                        "Specified target audience (tech-savvy professionals)",
-                        "Included tone guidelines (professional yet engaging)"
-                    ];
+            updateStepUI(2);
+            addMessageToChat(`Initial prompt: "${initialPromptValue}"`, 'user');
+            setLoadingState(true, "Refining prompt...");
 
-                    refinedPrompt = generateRefinedPrompt(initialPrompt);
-                    addMessage(`I've refined your prompt based on best practices:<br><br><strong>Refined Prompt:</strong><br>"${refinedPrompt}"<br><br><strong>Key improvements:</strong><br>• ${refinements.join('<br>• ')}`, 'assistant');
-                    
-                    setTimeout(() => {
-                        addMessage('Are you satisfied with this refined prompt? (Yes/No)', 'assistant');
-                        showUserInput();
-                        conversationState = 'feedback';
-                    }, 1000);
-                }, 2000);
-            }, 1000);
-        }
+            try {
+                // Clear previous errors from chat if any, or have a dedicated error display area
+                // For now, new errors will just be added.
 
-        function generateRefinedPrompt(original) {
-            // Simulate prompt refinement based on common patterns
-            const improvements = [
-                "As an expert content creator, ",
-                "Please provide a detailed and structured response ",
-                "targeted at tech-savvy professionals. ",
-                "Format your response with clear bullet points and examples. ",
-                "Maintain a professional yet engaging tone throughout."
-            ];
-            
-            return improvements.join('') + original.toLowerCase();
-        }
+                const response = await fetch(`${API_BASE_URL}/refine_initial_prompt`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initial_prompt: initialPromptValue })
+                });
 
-        function showUserInput() {
-            document.getElementById('userInputSection').classList.remove('hidden');
-            document.getElementById('userResponse').focus();
-        }
-
-        function hideUserInput() {
-            document.getElementById('userInputSection').classList.add('hidden');
-            document.getElementById('userResponse').value = '';
-        }
-
-        function sendUserResponse() {
-            const response = document.getElementById('userResponse').value.trim();
-            if (!response) return;
-
-            addMessage(response, 'user');
-            hideUserInput();
-
-            if (conversationState === 'feedback') {
-                if (response.toLowerCase().includes('no')) {
-                    addMessage('Please provide specific feedback on what you\'d like me to improve:', 'assistant');
-                    showUserInput();
-                    conversationState = 'revision';
-                } else {
-                    startClarifyingQuestions();
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
                 }
-            } else if (conversationState === 'revision') {
-                addMessage('Thank you for the feedback. Let me revise the prompt accordingly...', 'assistant');
-                setTimeout(() => {
-                    refinedPrompt = `${refinedPrompt} (Revised based on user feedback: ${response})`;
-                    addMessage(`Here's the revised prompt: "${refinedPrompt}"`, 'assistant');
-                    setTimeout(() => startClarifyingQuestions(), 1000);
-                }, 1500);
-            } else if (conversationState === 'questions') {
-                handleClarifyingResponse(response);
+
+                const data = await response.json();
+                current_prompt = data.refined_prompt;
+                conversation_history = data.conversation_history;
+
+                addMessageToChat(`**Refined Prompt:**<br>${current_prompt}`, 'assistant');
+                setLoadingState(false);
+                
+                // Automatically fetch the first clarifying question
+                await fetchClarifyingQuestion(current_prompt, conversation_history);
+
+            } catch (error) {
+                console.error("Error in startRefinement:", error);
+                addMessageToChat(`Failed to refine prompt: ${error.message || 'Unknown error'}`, 'error');
+                setLoadingState(false);
+                updateStepUI(1); // Revert to step 1 on error
             }
         }
 
-        function startClarifyingQuestions() {
-            updateStep(3);
-            questionNumber = 0;
-            conversationState = 'questions';
-            addMessage('Great! Now I\'ll ask a few clarifying questions to further optimize your prompt.', 'assistant');
-            setTimeout(() => askNextQuestion(), 1000);
-        }
+        async function fetchClarifyingQuestion(promptToRefine, history) {
+            updateStepUI(3); // Assuming asking questions is step 3
+            setLoadingState(true, "Fetching clarifying question...");
+            showUserInput(false);
 
-        function askNextQuestion() {
-            const questions = [
-                "What is your target audience for this prompt? (e.g., beginners, experts, general public)",
-                "What specific output format do you prefer? (e.g., bullet points, paragraphs, numbered list)",
-                "Are there any constraints or limitations I should consider? (e.g., word count, specific topics to avoid)"
-            ];
+            try {
+                const response = await fetch(`${API_BASE_URL}/get_clarifying_question`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_prompt: promptToRefine, conversation_history: history })
+                });
 
-            if (questionNumber < questions.length && questionNumber < maxQuestions) {
-                addMessage(questions[questionNumber], 'assistant');
-                showUserInput();
-            } else {
-                generateFinalPrompt();
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                conversation_history = data.updated_conversation_history; // Update history with the question from assistant
+                
+                if (data.question && data.question.trim().toUpperCase() !== NO_QUESTION_MARKER) {
+                    addMessageToChat(data.question, 'assistant');
+                    showUserInput(true);
+                    statusIndicatorEl.innerHTML = `<i class="fas fa-question-circle"></i> Waiting for your response`;
+                } else {
+                    // No more questions, proceed to generate final prompt
+                    addMessageToChat("No further questions. Generating final prompt...", 'assistant');
+                    await generateFinalPromptFromServer(conversation_history); // Pass the latest history
+                }
+            } catch (error) {
+                console.error("Error in fetchClarifyingQuestion:", error);
+                addMessageToChat(`Failed to fetch clarifying question: ${error.message || 'Unknown error'}`, 'error');
+            } finally {
+                setLoadingState(false);
             }
         }
+        
+        async function sendUserResponse() {
+            const userAnswer = userResponseInput.value.trim();
+            if (!userAnswer) return;
 
-        function handleClarifyingResponse(response) {
-            questionNumber++;
+            addMessageToChat(userAnswer, 'user');
+            // The conversation_history already contains the assistant's question.
+            // The backend will append the user's answer.
             
-            if (questionNumber < maxQuestions) {
-                setTimeout(() => askNextQuestion(), 500);
-            } else {
-                generateFinalPrompt();
+            setLoadingState(true, "Processing your answer...");
+            showUserInput(false);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/submit_answer_and_get_next`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        answer: userAnswer,
+                        current_prompt: current_prompt, // Send the latest refined prompt
+                        conversation_history: conversation_history // Send history up to assistant's question
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                conversation_history = data.updated_conversation_history; // Update history
+
+                if (data.type === "question") {
+                    if (data.question && data.question.trim().toUpperCase() !== NO_QUESTION_MARKER) {
+                        addMessageToChat(data.question, 'assistant');
+                        showUserInput(true);
+                        statusIndicatorEl.innerHTML = `<i class="fas fa-question-circle"></i> Waiting for your response`;
+                    } else {
+                         // This case should ideally be handled by the NO_QUESTION marker leading to final_prompt type
+                        addMessageToChat("No further questions. Generating final prompt...", 'assistant');
+                        await generateFinalPromptFromServer(conversation_history); // Pass the latest history
+                    }
+                } else if (data.type === "final_prompt") {
+                    updateStepUI(4);
+                    addMessageToChat("Perfect! Here's your final optimized prompt:", 'assistant');
+                    finalPromptContentEl.innerHTML = data.final_prompt.replace(/\n/g, '<br>');
+                    finalResultCard.classList.remove('hidden');
+                    finalResultCard.scrollIntoView({ behavior: 'smooth' });
+                }
+
+            } catch (error) {
+                console.error("Error in sendUserResponse:", error);
+                addMessageToChat(`Failed to process your answer: ${error.message || 'Unknown error'}`, 'error');
+            } finally {
+                setLoadingState(false);
             }
         }
 
-        function generateFinalPrompt() {
-            updateStep(4);
-            addMessage('Processing all information and generating your final optimized prompt...', 'assistant');
+        // This function is called if /get_clarifying_question or /submit_answer_and_get_next
+        // indicates NO_QUESTION, meaning the backend should have already generated the final prompt
+        // or is ready to do so. The current backend design for /submit_answer_and_get_next
+        // directly returns the final prompt if NO_QUESTION is the outcome.
+        // This function might be simplified if the backend always returns final_prompt when no more questions.
+        async function generateFinalPromptFromServer(history_for_final_prompt) {
+            // This function is primarily a fallback or if a dedicated endpoint was used.
+            // Given the current backend logic, /submit_answer_and_get_next handles this.
+            // If /get_clarifying_question returns NO_QUESTION, it means we need one more step.
+            // However, the prompt asks that if NO_QUESTION is returned, call a function like `generateFinalPromptFromServer`.
+            // Let's assume for now that if NO_QUESTION comes from /get_clarifying_question, we need to make a call
+            // that effectively does what /submit_answer_and_get_next does when it results in a final prompt.
+            // The simplest path is that `generateFinalPrompt` is implicitly handled by `/submit_answer_and_get_next`
+            // when `NO_QUESTION` is the natural conclusion.
+            // For the case where `/get_clarifying_question` itself returns `NO_QUESTION` directly:
+            
+            // The backend's `/submit_answer_and_get_next` already handles generating the final prompt
+            // if `ask_clarifying_question` (within the backend) returns `NO_QUESTION`.
+            // So, if `fetchClarifyingQuestion` receives `NO_QUESTION`, it means the *initial* check for questions
+            // yielded none. In this scenario, we need to tell the backend to finalize.
+            // We can simulate a "submission" that leads to finalization.
+            // A cleaner backend might have a dedicated /finalize_prompt endpoint.
+            // For now, let's assume if fetchClarifyingQuestion gets NO_QUESTION, it means the refined prompt was enough.
 
-            setTimeout(() => {
-                const finalPrompt = `${refinedPrompt} [Optimized based on clarifying responses and knowledge base context]`;
-                
-                addMessage('Perfect! I\'ve generated your final optimized prompt incorporating all the information gathered.', 'assistant');
-                
-                // Show final result card
-                document.getElementById('finalResult').classList.remove('hidden');
-                document.getElementById('finalPromptContent').textContent = finalPrompt;
-                
-                // Scroll to final result
-                document.getElementById('finalResult').scrollIntoView({ behavior: 'smooth' });
-            }, 2000);
+            addMessageToChat("Attempting to generate final prompt as no questions were needed.", 'assistant');
+            setLoadingState(true, "Generating final prompt...");
+
+            // The conversation_history should already include the "NO_QUESTION" from the assistant.
+            // We call the generate_final_prompt method which is part of submit_answer_and_get_next
+            // when NO_QUESTION is returned.
+            // Let's see if this logic is already covered.
+            // If fetchClarifyingQuestion gets NO_QUESTION, it means the backend's agent.ask_clarifying_question
+            // returned NO_QUESTION. The history has this.
+            // We then need to call something like agent.generate_final_prompt(history).
+            // The existing /submit_answer_and_get_next endpoint does this if its internal call to ask_clarifying_question yields NO_QUESTION.
+            // This situation (NO_QUESTION from the initial /get_clarifying_question) is slightly different.
+
+            // Simplification: The current backend structure implies that if get_clarifying_question returns NO_QUESTION,
+            // the final prompt should be generated based on the history ending with NO_QUESTION.
+            // The `generate_final_prompt` method in the backend takes `conversation_history`.
+            // We need an endpoint that just calls that. Or adapt an existing one.
+            // For now, I'll assume the `final_prompt` type from `/submit_answer_and_get_next` is the primary way.
+            // If `fetchClarifyingQuestion` gets `NO_QUESTION`, it means the process should have moved to finalization *by the backend*.
+            // This might indicate a small gap in the frontend-backend flow definition if `/get_clarifying_question` returning `NO_QUESTION` doesn't also return the final prompt.
+            // Based on current backend, `/get_clarifying_question` only returns a question or NO_QUESTION. It does not generate the final prompt.
+            // So if `fetchClarifyingQuestion` gets `NO_QUESTION`, we must call another endpoint.
+            // Let's assume we *must* go through `/submit_answer_and_get_next` to get a final prompt.
+            // We can send a dummy/empty answer.
+
+            try {
+                 const response = await fetch(`${API_BASE_URL}/submit_answer_and_get_next`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        answer: "Proceed to final prompt generation.", // A placeholder answer
+                        current_prompt: current_prompt, 
+                        conversation_history: history_for_final_prompt // This history includes the NO_QUESTION
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                conversation_history = data.updated_conversation_history;
+
+                if (data.type === "final_prompt") {
+                    updateStepUI(4);
+                    addMessageToChat("Perfect! Here's your final optimized prompt:", 'assistant');
+                    finalPromptContentEl.innerHTML = data.final_prompt.replace(/\n/g, '<br>');
+                    finalResultCard.classList.remove('hidden');
+                    finalResultCard.scrollIntoView({ behavior: 'smooth' });
+                } else if (data.type === "question") {
+                    // This should not happen if NO_QUESTION was the trigger
+                     addMessageToChat(`Unexpectedly received another question: ${data.question}`, 'error'); // Changed to 'error'
+                     showUserInput(true); // Or false, depending on how we want to handle this unexpected state
+                }
+
+            } catch (error) {
+                console.error("Error in generateFinalPromptFromServer:", error);
+                addMessageToChat(`Failed to generate final prompt: ${error.message || 'Unknown error'}`, 'error');
+            } finally {
+                setLoadingState(false);
+            }
         }
+
 
         function copyToClipboard() {
-            const finalPrompt = document.getElementById('finalPromptContent').textContent;
-            navigator.clipboard.writeText(finalPrompt).then(() => {
-                const btn = event.target.closest('button');
+            const finalPromptText = finalPromptContentEl.textContent; // Use textContent to get plain text
+            navigator.clipboard.writeText(finalPromptText).then(() => {
+                const btn = event.target.closest('button'); // Get the button that was clicked
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                btn.style.background = '#48bb78';
+                btn.style.background = '#48bb78'; // Green background for success
                 
                 setTimeout(() => {
                     btn.innerHTML = originalText;
-                    btn.style.background = '';
+                    btn.style.background = ''; // Reset background
                 }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy text. Please try again or copy manually.');
             });
         }
 
         function startOver() {
-            // Reset everything
             currentStep = 1;
-            conversationState = 'initial';
-            refinedPrompt = '';
-            questionNumber = 0;
+            current_prompt = "";
+            conversation_history = [];
             
-            // Clear inputs
-            document.getElementById('initialPrompt').value = '';
-            document.getElementById('userResponse').value = '';
+            initialPromptTextarea.value = '';
+            userResponseInput.value = '';
             
-            // Reset UI
-            updateStep(1);
-            document.getElementById('chatContainer').innerHTML = `
+            updateStepUI(1);
+            chatContainer.innerHTML = `
                 <div class="chat-message assistant">
                     <div class="message-bubble">
                         Welcome! I'm here to help you optimize your prompts. Start by entering your initial prompt on the left, and I'll guide you through the refinement process.
                     </div>
-                </div>
-            `;
+                </div>`;
             
-            hideUserInput();
-            document.getElementById('finalResult').classList.add('hidden');
+            showUserInput(false);
+            finalResultCard.classList.add('hidden');
+            finalPromptContentEl.textContent = '';
+            setLoadingState(false);
+            statusIndicatorEl.innerHTML = `<i class="fas fa-check-circle"></i> System Ready`;
             
-            // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Handle Enter key in input fields
-        document.getElementById('userResponse').addEventListener('keypress', function(e) {
+        // Event Listeners
+        userResponseInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendUserResponse();
             }
         });
-
-        // Initialize
-        updateStep(1);
+        
+        // Initial UI Setup
+        updateStepUI(1);
+        setLoadingState(false); // Ensure loading is off initially
     </script>
 </body>
 </html>

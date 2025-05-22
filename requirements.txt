@@ -4,3 +4,5 @@ pinecone
 sentence-transformers
 numpy
 python-dotenv
+Flask
+Flask-CORS
