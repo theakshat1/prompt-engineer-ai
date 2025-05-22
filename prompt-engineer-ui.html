@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Engineer AI</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            display: inline-block;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo i {
+            font-size: 3rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .main-interface {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .left-panel {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fff;
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        .status-ready {
+            background: rgba(72, 187, 120, 0.1);
+            color: #38a169;
+            border: 1px solid rgba(72, 187, 120, 0.3);
+        }
+
+        .status-processing {
+            background: rgba(237, 137, 54, 0.1);
+            color: #dd6b20;
+            border: 1px solid rgba(237, 137, 54, 0.3);
+        }
+
+        .chat-container {
+            background: #f7fafc;
+            border-radius: 16px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .chat-message.user {
+            text-align: right;
+        }
+
+        .chat-message.assistant {
+            text-align: left;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 18px;
+            max-width: 80%;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .assistant .message-bubble {
+            background: white;
+            color: #2d3748;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        .step {
+            background: white;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #a0aec0;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            border-color: #667eea;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .step.completed {
+            border-color: #48bb78;
+            background: #48bb78;
+            color: white;
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .floating-circle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .floating-circle:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .floating-circle:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .floating-circle:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @media (max-width: 768px) {
+            .main-interface {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .progress-steps {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .example-prompts {
+            margin-top: 20px;
+        }
+
+        .example-prompt {
+            background: rgba(102, 126, 234, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-prompt:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(5px);
+        }
+
+        .example-prompt h4 {
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .example-prompt p {
+            color: #4a5568;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h1>Prompt Engineer AI</h1>
+            <p class="subtitle">Optimize your prompts with AI-powered refinement and knowledge retrieval</p>
+        </header>
+
+        <div class="main-interface">
+            <div class="left-panel">
+                <div class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Initial Prompt
+                </div>
+                
+                <div class="status-indicator status-ready">
+                    <i class="fas fa-check-circle"></i>
+                    System Ready
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="initialPrompt">Enter your initial prompt:</label>
+                    <textarea 
+                        id="initialPrompt" 
+                        class="input-field" 
+                        placeholder="Describe the task you want to optimize a prompt for..."
+                        rows="5"
+                    ></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="startRefinement()">
+                    <i class="fas fa-magic"></i>
+                    Refine Prompt
+                </button>
+
+                <div class="example-prompts">
+                    <h3 style="margin-bottom: 15px; color: #4a5568; font-size: 1.1rem;">Example Prompts:</h3>
+                    <div class="example-prompt" onclick="useExamplePrompt(this)">
+                        <h4>Product Description</h4>
+                        <p>Write a compelling product description for a new smartphone.</p>
+                    </div>
+                    <div class="example-prompt" onclick="useExamplePrompt(this)">
+                        <h4>Data Analysis</h4>
+                        <p>Analyze sales data and provide insights about customer behavior.</p>
+                    </div>
+                    <div class="example-prompt" onclick="useExamplePrompt(this)">
+                        <h4>Educational Content</h4>
+                        <p>Create a lesson plan for teaching basic programming concepts.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="card">
+                    <div class="section-title">
+                        <i class="fas fa-route"></i>
+                        Progress
+                    </div>
+                    
+                    <div class="progress-steps">
+                        <div class="step active" id="step1">1</div>
+                        <div class="step" id="step2">2</div>
+                        <div class="step" id="step3">3</div>
+                        <div class="step" id="step4">4</div>
+                    </div>
+
+                    <div id="stepInfo">
+                        <strong>Step 1:</strong> Initial Prompt Analysis
+                        <p style="margin-top: 5px; color: #666; font-size: 0.9rem;">Enter your initial prompt to begin the optimization process.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <i class="fas fa-comments"></i>
+                        AI Conversation
+                    </div>
+                    
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-message assistant">
+                            <div class="message-bubble">
+                                Welcome! I'm here to help you optimize your prompts. Start by entering your initial prompt on the left, and I'll guide you through the refinement process.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="userInputSection" class="hidden">
+                        <div class="input-group">
+                            <input type="text" id="userResponse" class="input-field" style="min-height: auto;" placeholder="Your response...">
+                        </div>
+                        <button class="btn btn-secondary" onclick="sendUserResponse()">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Response
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card hidden" id="finalResult">
+                    <div class="section-title">
+                        <i class="fas fa-check-circle" style="color: #48bb78;"></i>
+                        Final Optimized Prompt
+                    </div>
+                    
+                    <div id="finalPromptContent" style="background: #f7fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #48bb78;">
+                        <!-- Final prompt will be displayed here -->
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: 15px;" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i>
+                        Copy Prompt
+                    </button>
+                    
+                    <button class="btn btn-secondary" style="margin-top: 15px; margin-left: 10px;" onclick="startOver()">
+                        <i class="fas fa-redo"></i>
+                        Start Over
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let conversationState = 'initial';
+        let refinedPrompt = '';
+        let questionNumber = 0;
+        const maxQuestions = 3;
+
+        const stepInfo = {
+            1: { title: "Initial Prompt Analysis", desc: "Enter your initial prompt to begin the optimization process." },
+            2: { title: "Prompt Refinement", desc: "AI analyzes and refines your prompt based on best practices." },
+            3: { title: "Clarifying Questions", desc: "Answer questions to further optimize your prompt." },
+            4: { title: "Final Optimization", desc: "Receive your fully optimized prompt ready for use." }
+        };
+
+        function updateStep(step) {
+            // Update progress indicators
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.classList.remove('active', 'completed');
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                }
+            }
+
+            // Update step info
+            const stepInfoEl = document.getElementById('stepInfo');
+            stepInfoEl.innerHTML = `
+                <strong>Step ${step}:</strong> ${stepInfo[step].title}
+                <p style="margin-top: 5px; color: #666; font-size: 0.9rem;">${stepInfo[step].desc}</p>
+            `;
+
+            currentStep = step;
+        }
+
+        function addMessage(content, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}`;
+            messageDiv.innerHTML = `<div class="message-bubble">${content}</div>`;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function useExamplePrompt(element) {
+            const promptText = element.querySelector('p').textContent;
+            document.getElementById('initialPrompt').value = promptText;
+        }
+
+        function startRefinement() {
+            const initialPrompt = document.getElementById('initialPrompt').value.trim();
+            if (!initialPrompt) {
+                alert('Please enter an initial prompt first.');
+                return;
+            }
+
+            updateStep(2);
+            addMessage(`Initial prompt: "${initialPrompt}"`, 'user');
+            
+            // Simulate AI processing
+            setTimeout(() => {
+                addMessage('Analyzing your prompt and retrieving relevant context from knowledge base...', 'assistant');
+                
+                setTimeout(() => {
+                    const refinements = [
+                        "Added specific role assignment (expert content creator)",
+                        "Clarified desired output format (structured with bullet points)",
+                        "Specified target audience (tech-savvy professionals)",
+                        "Included tone guidelines (professional yet engaging)"
+                    ];
+
+                    refinedPrompt = generateRefinedPrompt(initialPrompt);
+                    addMessage(`I've refined your prompt based on best practices:<br><br><strong>Refined Prompt:</strong><br>"${refinedPrompt}"<br><br><strong>Key improvements:</strong><br>• ${refinements.join('<br>• ')}`, 'assistant');
+                    
+                    setTimeout(() => {
+                        addMessage('Are you satisfied with this refined prompt? (Yes/No)', 'assistant');
+                        showUserInput();
+                        conversationState = 'feedback';
+                    }, 1000);
+                }, 2000);
+            }, 1000);
+        }
+
+        function generateRefinedPrompt(original) {
+            // Simulate prompt refinement based on common patterns
+            const improvements = [
+                "As an expert content creator, ",
+                "Please provide a detailed and structured response ",
+                "targeted at tech-savvy professionals. ",
+                "Format your response with clear bullet points and examples. ",
+                "Maintain a professional yet engaging tone throughout."
+            ];
+            
+            return improvements.join('') + original.toLowerCase();
+        }
+
+        function showUserInput() {
+            document.getElementById('userInputSection').classList.remove('hidden');
+            document.getElementById('userResponse').focus();
+        }
+
+        function hideUserInput() {
+            document.getElementById('userInputSection').classList.add('hidden');
+            document.getElementById('userResponse').value = '';
+        }
+
+        function sendUserResponse() {
+            const response = document.getElementById('userResponse').value.trim();
+            if (!response) return;
+
+            addMessage(response, 'user');
+            hideUserInput();
+
+            if (conversationState === 'feedback') {
+                if (response.toLowerCase().includes('no')) {
+                    addMessage('Please provide specific feedback on what you\'d like me to improve:', 'assistant');
+                    showUserInput();
+                    conversationState = 'revision';
+                } else {
+                    startClarifyingQuestions();
+                }
+            } else if (conversationState === 'revision') {
+                addMessage('Thank you for the feedback. Let me revise the prompt accordingly...', 'assistant');
+                setTimeout(() => {
+                    refinedPrompt = `${refinedPrompt} (Revised based on user feedback: ${response})`;
+                    addMessage(`Here's the revised prompt: "${refinedPrompt}"`, 'assistant');
+                    setTimeout(() => startClarifyingQuestions(), 1000);
+                }, 1500);
+            } else if (conversationState === 'questions') {
+                handleClarifyingResponse(response);
+            }
+        }
+
+        function startClarifyingQuestions() {
+            updateStep(3);
+            questionNumber = 0;
+            conversationState = 'questions';
+            addMessage('Great! Now I\'ll ask a few clarifying questions to further optimize your prompt.', 'assistant');
+            setTimeout(() => askNextQuestion(), 1000);
+        }
+
+        function askNextQuestion() {
+            const questions = [
+                "What is your target audience for this prompt? (e.g., beginners, experts, general public)",
+                "What specific output format do you prefer? (e.g., bullet points, paragraphs, numbered list)",
+                "Are there any constraints or limitations I should consider? (e.g., word count, specific topics to avoid)"
+            ];
+
+            if (questionNumber < questions.length && questionNumber < maxQuestions) {
+                addMessage(questions[questionNumber], 'assistant');
+                showUserInput();
+            } else {
+                generateFinalPrompt();
+            }
+        }
+
+        function handleClarifyingResponse(response) {
+            questionNumber++;
+            
+            if (questionNumber < maxQuestions) {
+                setTimeout(() => askNextQuestion(), 500);
+            } else {
+                generateFinalPrompt();
+            }
+        }
+
+        function generateFinalPrompt() {
+            updateStep(4);
+            addMessage('Processing all information and generating your final optimized prompt...', 'assistant');
+
+            setTimeout(() => {
+                const finalPrompt = `${refinedPrompt} [Optimized based on clarifying responses and knowledge base context]`;
+                
+                addMessage('Perfect! I\'ve generated your final optimized prompt incorporating all the information gathered.', 'assistant');
+                
+                // Show final result card
+                document.getElementById('finalResult').classList.remove('hidden');
+                document.getElementById('finalPromptContent').textContent = finalPrompt;
+                
+                // Scroll to final result
+                document.getElementById('finalResult').scrollIntoView({ behavior: 'smooth' });
+            }, 2000);
+        }
+
+        function copyToClipboard() {
+            const finalPrompt = document.getElementById('finalPromptContent').textContent;
+            navigator.clipboard.writeText(finalPrompt).then(() => {
+                const btn = event.target.closest('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                btn.style.background = '#48bb78';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+
+        function startOver() {
+            // Reset everything
+            currentStep = 1;
+            conversationState = 'initial';
+            refinedPrompt = '';
+            questionNumber = 0;
+            
+            // Clear inputs
+            document.getElementById('initialPrompt').value = '';
+            document.getElementById('userResponse').value = '';
+            
+            // Reset UI
+            updateStep(1);
+            document.getElementById('chatContainer').innerHTML = `
+                <div class="chat-message assistant">
+                    <div class="message-bubble">
+                        Welcome! I'm here to help you optimize your prompts. Start by entering your initial prompt on the left, and I'll guide you through the refinement process.
+                    </div>
+                </div>
+            `;
+            
+            hideUserInput();
+            document.getElementById('finalResult').classList.add('hidden');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Handle Enter key in input fields
+        document.getElementById('userResponse').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendUserResponse();
+            }
+        });
+
+        // Initialize
+        updateStep(1);
+    </script>
+</body>
+</html>
