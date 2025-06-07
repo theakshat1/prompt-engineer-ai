@@ -1,0 +1,524 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #4A5568; /* Default text color slightly softer */
+    overflow-x: hidden;
+    line-height: 1.6; /* Improved default line height */
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.logo {
+    background: rgba(255, 255, 255, 0.15); /* Slightly more opaque */
+    backdrop-filter: blur(12px); /* Increased blur */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 24px; /* Standardized larger radius */
+    padding: 30px;
+    display: inline-block;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.logo i {
+    font-size: 3rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+h1 {
+    color: #fff;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.main-interface {
+    display: flex;
+    gap: 30px;
+    flex: 1;
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.left-panel {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.98); /* Brighter background */
+    backdrop-filter: blur(15px);
+    border-radius: 20px; /* Standardized radius */
+    padding: 30px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08); /* Softer shadow */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 24px; /* Increased gap slightly */
+}
+
+.section-title {
+    font-size: 1.5rem; /* Slightly larger section titles */
+    font-weight: 600;
+    color: #1a202c; /* Darker for more contrast */
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-title i {
+    color: #667eea;
+}
+
+.input-group {
+    margin-bottom: 25px;
+}
+
+.input-label {
+    display: block;
+    font-weight: 500;
+    color: #2d3748; /* Darker label */
+    margin-bottom: 10px; /* Increased margin */
+    font-size: 1rem; /* Slightly larger label */
+}
+
+.input-field {
+    width: 100%;
+    padding: 16px 20px; /* Slightly more padding */
+    border: 1px solid #cbd5e0; /* Softer border */
+    border-radius: 12px; /* Consistent radius */
+    font-size: 1rem;
+    transition: all 0.2s ease-in-out; /* Faster transition */
+    background: #fff;
+    resize: vertical;
+    min-height: 120px;
+    color: #2d3748;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15); /* Slightly larger shadow */
+}
+
+.btn {
+    padding: 16px 32px; /* Increased padding */
+    border: none;
+    border-radius: 12px; /* Consistent radius */
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out; /* Faster transition */
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    justify-content: center;
+    letter-spacing: 0.5px; /* Added letter spacing */
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #5a67d8 0%, #764ba2 100%); /* Slightly darker gradient start */
+    color: white;
+    box-shadow: 0 5px 15px rgba(90, 103, 216, 0.35); /* Adjusted shadow */
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px); /* Slightly more lift */
+    box-shadow: 0 9px 28px rgba(90, 103, 216, 0.5); /* Adjusted shadow */
+}
+
+.btn-primary:active { /* Added active state */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(90, 103, 216, 0.4);
+}
+
+.btn-secondary {
+    background: #f7fafc; /* Lighter background */
+    color: #5a67d8; /* Matching primary button color */
+    border: 2px solid #e2e8f0; /* Softer border */
+}
+
+.btn-secondary:hover {
+    background: #e2e8f0; /* Darker hover */
+    color: #4c51bf; /* Darker text on hover */
+    transform: translateY(-3px);
+    border-color: #cbd5e0;
+}
+
+.btn-secondary:active { /* Added active state */
+    transform: translateY(-1px);
+    background: #cbd5e0;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.98); /* Brighter background */
+    backdrop-filter: blur(15px);
+    border-radius: 20px; /* Consistent with left-panel */
+    padding: 28px; /* Slightly more padding */
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08); /* Softer shadow */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Added box-shadow transition */
+}
+
+.card:hover {
+    transform: translateY(-6px); /* More lift */
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12); /* Enhanced shadow on hover */
+}
+
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px; /* Increased gap */
+    padding: 10px 18px; /* Increased padding */
+    border-radius: 24px; /* Larger radius */
+    font-size: 0.95rem; /* Slightly larger font */
+    font-weight: 500;
+    margin-bottom: 20px;
+    transition: all 0.2s ease-in-out;
+}
+
+.status-ready {
+    background: rgba(72, 187, 120, 0.15); /* Slightly more intense */
+    color: #2f855a; /* Darker green */
+    border: 1px solid rgba(72, 187, 120, 0.4);
+}
+
+.status-processing {
+    background: rgba(237, 137, 54, 0.15); /* Slightly more intense */
+    color: #c05621; /* Darker orange */
+    border: 1px solid rgba(237, 137, 54, 0.4);
+}
+.status-processing i { /* Ensure spinner icon is clearly visible */
+    font-size: 1.1em; /* Slightly larger spinner */
+}
+
+.chat-container {
+    background: #edf2f7; /* Slightly darker background for chat */
+    border-radius: 12px; /* Consistent radius */
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    border: 1px solid #e2e8f0; /* Softer border */
+}
+
+.chat-message {
+    margin-bottom: 15px;
+    animation: slideIn 0.25s ease-out; /* Faster animation */
+}
+
+.chat-message.user {
+    text-align: right;
+}
+
+.chat-message.assistant {
+    text-align: left;
+}
+
+.message-bubble {
+    display: inline-block;
+    padding: 14px 20px; /* Increased padding */
+    border-radius: 20px; /* Slightly larger radius */
+    max-width: 80%;
+    font-size: 0.98rem; /* Slightly larger font */
+    line-height: 1.5; /* Improved line height */
+}
+
+.user .message-bubble {
+    background: linear-gradient(135deg, #5a67d8 0%, #764ba2 100%); /* Matching primary button */
+    color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.assistant .message-bubble {
+    background: #ffffff;
+    color: #2d3748;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.06); /* Slightly more shadow */
+}
+
+.error .message-bubble,
+.system-error .message-bubble { /* Combined for consistency */
+    background: #fed7d7; /* Lighter red background */
+    color: #c53030; /* Dark red text */
+    border: 1px solid #fbb6b6;
+    border-left: 5px solid #e53e3e; /* Brighter red for border */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+/* Optional: Add an icon for errors using Font Awesome. Ensure FA is loaded in HTML.
+.error .message-bubble::before,
+.system-error .message-bubble::before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    content: "\f071";
+    margin-right: 10px;
+    color: #c53030;
+}
+*/
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.progress-steps::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 1;
+}
+
+.step {
+    background: white;
+    border: 3px solid #e2e8f0;
+    border-radius: 50%;
+    width: 48px; /* Slightly smaller */
+    height: 48px; /* Slightly smaller */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #a0aec0;
+    position: relative;
+    z-index: 2;
+    transition: all 0.2s ease-in-out; /* Faster transition */
+}
+
+.step.active {
+    border-color: #5a67d8; /* Matching primary color */
+    color: #5a67d8;
+    background: rgba(90, 103, 216, 0.1);
+    transform: scale(1.1); /* Add scale to active step */
+}
+
+.step.completed {
+    border-color: #38a169; /* Darker green */
+    background: #38a169; /* Darker green */
+    color: white;
+    transform: scale(1.05); /* Slight scale for completed */
+}
+
+.floating-elements {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.floating-circle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    animation: float 8s ease-in-out infinite; /* Slower float */
+}
+
+.floating-circle:nth-child(1) {
+    width: 80px;
+    height: 80px;
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.floating-circle:nth-child(2) {
+    width: 120px;
+    height: 120px;
+    top: 60%;
+    right: 15%;
+    animation-delay: 2s;
+}
+
+.floating-circle:nth-child(3) {
+    width: 60px;
+    height: 60px;
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 4s;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 1.8s ease-in-out infinite; /* Slower pulse */
+}
+
+/* Global loading overlay class (optional, needs JS to add to body/container) */
+.app-loading::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3); /* Semi-transparent overlay */
+    backdrop-filter: blur(3px);
+    z-index: 9998; /* Below potential popups but above most content */
+    pointer-events: none; /* Allow clicks through if not a modal loader */
+    opacity: 0;
+    animation: fadeInOverlay 0.3s forwards;
+}
+
+@keyframes fadeInOverlay {
+    to { opacity: 1; }
+}
+
+
+@media (max-width: 768px) {
+    .main-interface {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .container {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .progress-steps {
+        flex-wrap: wrap; /* Allow steps to wrap */
+        gap: 15px; /* Space for wrapped items */
+        justify-content: center; /* Center wrapped items */
+    }
+    .step { /* Adjust step size for mobile if needed */
+        width: 44px;
+        height: 44px;
+        font-size: 0.9em;
+    }
+    .btn { /* Ensure buttons are full width or appropriately sized on mobile */
+        width: 100%;
+        padding: 15px 20px;
+    }
+    .input-field {
+        padding: 15px;
+    }
+}
+
+.hidden {
+    display: none !important; /* Ensure hidden class takes precedence */
+}
+
+.example-prompts {
+    margin-top: 25px; /* Increased margin */
+    padding: 20px; /* Added padding */
+    background: rgba(255, 255, 255, 0.05); /* Subtle background */
+    border-radius: 16px; /* Rounded corners */
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.example-prompt {
+    background: rgba(255, 255, 255, 0.1); /* Slightly more visible */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px; /* Slightly smaller radius */
+    padding: 16px; /* Increased padding */
+    margin-bottom: 12px; /* Increased margin */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out; /* Faster transition */
+}
+
+.example-prompt:hover {
+    background: rgba(255, 255, 255, 0.2); /* More visible hover */
+    transform: translateX(4px) scale(1.01); /* Slight scale and shift */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.example-prompt h4 {
+    color: #E0E7FF; /* Lighter heading for dark background example prompts */
+    margin-bottom: 8px; /* Increased margin */
+    font-size: 1rem; /* Slightly larger font */
+}
+
+.example-prompt p {
+    color: #C3DAFE; /* Lighter paragraph text */
+    font-size: 0.9rem; /* Slightly larger font */
+    line-height: 1.5; /* Improved line height */
+}

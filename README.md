@@ -1,6 +1,6 @@
 # Prompt Engineer AI
 
-An AI-powered prompt engineering tool using OpenAI API and Pinecone for knowledge retrieval, now with an interactive web interface.
+An AI-powered prompt engineering tool using OpenAI API and Pinecone for knowledge retrieval, now with an interactive web interface featuring an improved UI/UX and Redux-based state management.
 
 ## Introduction
 
@@ -8,7 +8,8 @@ A powerful tool designed to generate and optimize prompts for language models. L
 
 ## Features
 
-- Interactive web interface (`prompt-engineer-ui.html`) for a user-friendly experience.
+- Interactive web interface (`src/index.html`) for a user-friendly experience, with recent UI/UX enhancements.
+- Frontend state management powered by Redux (via CDN).
 - Backend API built with Flask to handle prompt engineering logic.
 - Refines and optimizes user-provided initial prompts.
 - Retrieves relevant context from a Pinecone vector database.
@@ -17,19 +18,24 @@ A powerful tool designed to generate and optimize prompts for language models. L
 
 ## Architecture
 
-The application now runs with a client-server architecture:
-- **Frontend:** A static HTML page (`prompt-engineer-ui.html`) with JavaScript that provides the user interface. This UI runs in your browser.
-- **Backend:** A Flask server (`optimized-prompt-engineer-agent.py`) that exposes API endpoints for prompt engineering tasks. The frontend communicates with these APIs locally.
+The application runs with a client-server architecture:
+- **Frontend:** Static HTML, CSS, and JavaScript files located in the `src` directory.
+    - `src/index.html`: The main HTML file.
+    - `src/style.css`: Contains all styles for the application.
+    - `src/app.js`: Handles client-side logic, DOM manipulation, and API calls.
+    - `src/store.js`: Defines the Redux store, actions, and reducers for state management. Redux library is loaded via CDN.
+    - The UI runs in your browser and communicates with the local backend.
+- **Backend:** A Flask server (`optimized-prompt-engineer-agent.py`) that exposes API endpoints for prompt engineering tasks.
 
 ## Installation
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/theakshat1/prompt-engineer-ai # Or your fork/repo URL
+    git clone https://github.com/your-username/prompt-engineer-ai # Or your fork/repo URL
     cd prompt-engineer-ai
     ```
 
-2.  **Install the required dependencies:**
+2.  **Install the required Python dependencies (for the backend):**
     Make sure you have Python 3.7+ installed.
     ```bash
     pip install -r requirements.txt
@@ -45,27 +51,26 @@ The application now runs with a client-server architecture:
         -   `PINECONE_API_KEY`: Your API key for Pinecone services.
     -   Optionally, you can configure:
         -   `PORT`: The port for the Flask backend server (defaults to 5000 if not set).
-        -   `SYSTEM_PROMPT`: A general system prompt for the AI agent. The agent has a default if this is not set. Note that more specific prompts for refining, clarifying, and finalizing are hardcoded within the agent.
+        -   `SYSTEM_PROMPT`: A general system prompt for the AI agent.
 
 ## Usage
 
 1.  **Set up the Pinecone index (if not already done):**
-    The application uses a Pinecone index for knowledge retrieval to enhance prompt generation. If you have a `pinecone-index-setup.py` script and relevant data, run it to populate your index.
+    The application uses a Pinecone index for knowledge retrieval. If you have a `pinecone-index-setup.py` script and relevant data, run it to populate your index.
     ```bash
     python pinecone-index-setup.py
     ```
-    (Ensure your Pinecone environment and index details are correctly configured for this script, possibly using environment variables if the script supports them).
 
 2.  **Run the Backend Server:**
-    This command starts the Flask development server which listens for API requests from the frontend.
+    This command starts the Flask development server.
     ```bash
     python optimized-prompt-engineer-agent.py
     ```
-    The server will typically run on `http://127.0.0.1:5000` (or the port specified by your `PORT` environment variable in the `.env` file). You should see output in your terminal indicating the server is running and on which address.
+    The server will typically run on `http://127.0.0.1:5000`.
 
 3.  **Access the Web Interface:**
-    Open the `prompt-engineer-ui.html` file directly in your web browser (e.g., by double-clicking it, or using "File > Open" in your browser and navigating to the file).
-    The web UI will then communicate with the local Flask server you started in the previous step. Follow the instructions on the page to start refining your prompts.
+    Open the `src/index.html` file directly in your web browser (e.g., by double-clicking it, or using "File > Open").
+    The web UI will communicate with the local Flask server.
 
 ## Credits
 

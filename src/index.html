@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Engineer AI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.2.1/redux.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="store.js"></script>
+</head>
+<body>
+    <div class="floating-elements">
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+        <div class="floating-circle"></div>
+    </div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h1>Prompt Engineer AI</h1>
+            <p class="subtitle">Optimize your prompts with AI-powered refinement and knowledge retrieval</p>
+        </header>
+
+        <div class="main-interface">
+            <div class="left-panel">
+                <div class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Initial Prompt
+                </div>
+
+                <div class="status-indicator status-ready">
+                    <i class="fas fa-check-circle"></i>
+                    System Ready
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="initialPrompt">Enter your initial prompt:</label>
+                    <textarea
+                        id="initialPrompt"
+                        class="input-field"
+                        placeholder="Describe the task you want to optimize a prompt for..."
+                        rows="5"
+                    ></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="startRefinement()">
+                    <i class="fas fa-magic"></i>
+                    Refine Prompt
+                </button>
+
+                <div class="example-prompts">
+                    <h3 style="margin-bottom: 15px; color: #4a5568; font-size: 1.1rem;">Example Prompts:</h3>
+                    <div class="example-prompt" onclick="useExamplePrompt(this)">
+                        <h4>Product Description</h4>
+                        <p>Write a compelling product description for a new smartphone.</p>
+                    </div>
+                    <div class="example-prompt" onclick="useExamplePrompt(this)">
+                        <h4>Data Analysis</h4>
+                        <p>Analyze sales data and provide insights about customer behavior.</p>
+                    </div>
+                    <div class="example-prompt" onclick="useExamplePrompt(this)">
+                        <h4>Educational Content</h4>
+                        <p>Create a lesson plan for teaching basic programming concepts.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="card">
+                    <div class="section-title">
+                        <i class="fas fa-route"></i>
+                        Progress
+                    </div>
+
+                    <div class="progress-steps">
+                        <div class="step active" id="step1">1</div>
+                        <div class="step" id="step2">2</div>
+                        <div class="step" id="step3">3</div>
+                        <div class="step" id="step4">4</div>
+                    </div>
+
+                    <div id="stepInfo">
+                        <strong>Step 1:</strong> Initial Prompt Analysis
+                        <p style="margin-top: 5px; color: #666; font-size: 0.9rem;">Enter your initial prompt to begin the optimization process.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">
+                        <i class="fas fa-comments"></i>
+                        AI Conversation
+                    </div>
+
+                    <div class="chat-container" id="chatContainer">
+                        <div class="chat-message assistant">
+                            <div class="message-bubble">
+                                Welcome! I'm here to help you optimize your prompts. Start by entering your initial prompt on the left, and I'll guide you through the refinement process.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="userInputSection" class="hidden">
+                        <div class="input-group">
+                            <input type="text" id="userResponse" class="input-field" style="min-height: auto;" placeholder="Your response...">
+                        </div>
+                        <button class="btn btn-secondary" onclick="sendUserResponse()">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Response
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card hidden" id="finalResult">
+                    <div class="section-title">
+                        <i class="fas fa-check-circle" style="color: #48bb78;"></i>
+                        Final Optimized Prompt
+                    </div>
+
+                    <div id="finalPromptContent" style="background: #f7fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #48bb78;">
+                        <!-- Final prompt will be displayed here -->
+                    </div>
+
+                    <button class="btn btn-primary" style="margin-top: 15px;" onclick="copyToClipboard()">
+                        <i class="fas fa-copy"></i>
+                        Copy Prompt
+                    </button>
+
+                    <button class="btn btn-secondary" style="margin-top: 15px; margin-left: 10px;" onclick="startOver()">
+                        <i class="fas fa-redo"></i>
+                        Start Over
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script> <!-- app.js must be last -->
+</body>
+</html>
