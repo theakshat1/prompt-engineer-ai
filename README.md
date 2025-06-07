@@ -55,22 +55,73 @@ The application runs with a client-server architecture:
 
 ## Usage
 
-1.  **Set up the Pinecone index (if not already done):**
-    The application uses a Pinecone index for knowledge retrieval. If you have a `pinecone-index-setup.py` script and relevant data, run it to populate your index.
+This section guides you through running the Prompt Engineer AI system.
+
+**Prerequisites:**
+
+*   **Python:** Ensure you have Python 3.7 or newer installed. You can check your Python version by opening a terminal or command prompt and typing:
+    ```bash
+    python --version
+    ```
+    If Python is not installed or not in your system's PATH, please download it from [python.org](https://www.python.org/) and install it. Make sure to check the option "Add Python to PATH" during installation on Windows.
+*   **pip:** Python's package installer, `pip`, should be included with your Python installation.
+*   **Dependencies:** You should have already installed the necessary Python packages by running `pip install -r requirements.txt` as mentioned in the "Installation" section. If you encounter errors in later steps, please ensure this step was completed successfully.
+*   **API Keys:** Ensure your `.env` file is correctly set up with your `OPENAI_API_KEY` and `PINECONE_API_KEY` as described in "Installation."
+
+**Steps to Run the System:**
+
+**1. Set Up the Pinecone Index (Knowledge Base - Optional for basic operation but recommended for full functionality):**
+
+The application can use a Pinecone vector database to retrieve relevant knowledge and enhance prompt generation. If your project includes a `pinecone-index-setup.py` script and you have data to populate your index:
+
+*   **Purpose:** This step creates and populates a specialized database that the AI uses to find information relevant to your prompts, making the refined prompts more knowledgeable and context-aware.
+*   **When to run:** You typically only need to run this setup script once, or whenever you need to update the knowledge base with new data. If the index is already set up and populated, you can skip this step.
+*   **Command:**
     ```bash
     python pinecone-index-setup.py
     ```
+*   **Note:** Ensure your Pinecone API key and environment details are correctly configured for this script (often via the `.env` file or directly in the script if it's designed that way). If you skip this, the AI will still refine prompts but without custom knowledge retrieval.
 
-2.  **Run the Backend Server:**
-    This command starts the Flask development server.
+**2. Run the Backend Server:**
+
+The backend server is a Flask application that handles the core prompt engineering logic.
+
+*   **Command:** Open your terminal or command prompt, navigate to the project's root directory (where `optimized-prompt-engineer-agent.py` is located), and run:
     ```bash
     python optimized-prompt-engineer-agent.py
     ```
-    The server will typically run on `http://127.0.0.1:5000`.
+*   **Expected Output:** You should see messages indicating the Flask server is starting. Once running, you'll typically see something like:
+    ```
+     * Serving Flask app 'optimized-prompt-engineer-agent'
+     * Debug mode: off  # (or on, depending on server config)
+     * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+    ```
+    Keep this terminal window open. The server needs to be running for the web interface to work. The address (e.g., `http://127.0.0.1:5000/`) is where the backend API is accessible.
 
-3.  **Access the Web Interface:**
-    Open the `src/index.html` file directly in your web browser (e.g., by double-clicking it, or using "File > Open").
-    The web UI will communicate with the local Flask server.
+**3. Access the Web Interface:**
+
+The web interface is a static HTML page that you open in your browser.
+
+*   **Action:** Navigate to the `src` directory within your project folder.
+*   Open the `index.html` file (i.e., `src/index.html`) directly in your web browser. You can usually do this by:
+    *   Double-clicking the `index.html` file.
+    *   Right-clicking the file and choosing "Open with" and then selecting your preferred browser.
+    *   Typing the file path directly into your browser's address bar (e.g., `file:///path/to/your/project/src/index.html`).
+*   **Interaction:** The web page will load, and it will automatically try to communicate with the backend server you started in Step 2. You can now use the interface to enter your initial prompts and begin the refinement process.
+
+**Troubleshooting Common Issues:**
+
+*   **Server Not Starting / `ModuleNotFoundError`:**
+    *   Ensure you have installed all dependencies: `pip install -r requirements.txt`.
+    *   Make sure you are in the correct directory in your terminal when running `python optimized-prompt-engineer-agent.py`.
+*   **Web Interface Not Working / Not Connecting to Backend:**
+    *   Confirm the backend server is running (see terminal output from Step 2).
+    *   Ensure the `API_BASE_URL` in `src/app.js` (currently `http://127.0.0.1:5000`) matches the address where your Flask server is running.
+    *   Check your browser's developer console (usually F12) for any error messages (e.g., network errors, JavaScript errors).
+    *   Ensure JavaScript is enabled in your browser. Try clearing your browser cache or using a different browser.
+*   **Pinecone Errors:**
+    *   Verify your `PINECONE_API_KEY` and environment settings in the `.env` file are correct.
+    *   Ensure your Pinecone index exists and is configured as expected by `pinecone-index-setup.py` or the main agent.
 
 ## Credits
 
